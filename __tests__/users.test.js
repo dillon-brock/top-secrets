@@ -10,13 +10,20 @@ const testUser = {
   password: 'password'
 };
 
+const authorizedUser = {
+  firstName: 'authorized',
+  lastName: 'user',
+  email: 'test@defense.gov',
+  password: 'password'
+};
+
 describe('authentication and authorization routes', () => {
   beforeEach(() => {
     return setup(pool);
   });
-  it('creates a new user', async () => {
-    const res = await request(app).post('/api/v1/users').send(testUser);
-    const { firstName, lastName, email } = testUser;
+  it('creates a new user with defense.gov email', async () => {
+    const res = await request(app).post('/api/v1/users').send(authorizedUser);
+    const { firstName, lastName, email } = authorizedUser;
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
@@ -26,9 +33,13 @@ describe('authentication and authorization routes', () => {
       email
     });
   });
+  it('does not allow users to sign up without a defense.gov email', async () => {
+    const res = await request(app).post('/api/v1/users').send(testUser);
+    expect(res.status).toBe(403);
+  });
   it('signs in a user', async () => {
-    await request(app).post('/api/v1/users').send(testUser);
-    const res = await request(app).post('/api/v1/users/sessions').send(testUser);
+    await request(app).post('/api/v1/users').send(authorizedUser);
+    const res = await request(app).post('/api/v1/users/sessions').send(authorizedUser);
     expect(res.status).toBe(200);
     expect(res.body.message).toEqual('Signed in successfully!');
   });
