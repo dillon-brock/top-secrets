@@ -56,6 +56,14 @@ describe('backend-express-template routes', () => {
       ...newSecret
     });
   });
+  it('should give a 401 error if user is not signed in and tries to post secret', async () => {
+    const newSecret = {
+      title: 'Birds Aren\'t Real',
+      description: 'All birds are small government-created drones built for surveilling the American people.'
+    };
+    const res = await request(app).post('/api/v1/secrets').send(newSecret);
+    expect(res.status).toBe(401);
+  });
   afterAll(() => {
     pool.end();
   });
