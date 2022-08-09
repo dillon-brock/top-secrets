@@ -1,14 +1,40 @@
 const pool = require('../lib/utils/pool');
 const setup = require('../data/setup');
-// const request = require('supertest');
-// const app = require('../lib/app');
+const request = require('supertest');
+const app = require('../lib/app');
+const UserService = require('../lib/services/UserService');
+
+const testUser = {
+  firstName: 'Test',
+  lastName: 'User',
+  email: 'test@example.com',
+  password: '12345',
+};
+
+const registerAndLogin = async () => {
+  const agent = request.agent(app);
+  const user = await UserService.create({ ...testUser });
+
+  const password = testUser.password;
+  const { email } = user;
+  await agent.post('/api/v1/users/sessions').send({ email, password });
+  return [agent];
+};
 
 describe('backend-express-template routes', () => {
   beforeEach(() => {
     return setup(pool);
   });
-  it.skip('example test - delete me!', () => {
-    expect(1).toEqual(1);
+  it('should get list of secrets if user is signed in', async () => {
+    const [agent] = await registerAndLogin();
+    const res = await agent.get('/api/v1/secrets');
+
+    expect(res.status).toBe(200);
+    expect(res.body[0]).toEqual({
+      title: expect.any(String),
+      description: expect.any(String),
+      created_at: expect.any(String)
+    });
   });
   afterAll(() => {
     pool.end();
