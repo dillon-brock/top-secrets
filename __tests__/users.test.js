@@ -27,9 +27,20 @@ describe('authentication and authorization routes', () => {
     });
   });
   it('signs in a user', async () => {
-    const res = await request(app).post('/api/v1/users/session').send(testUser);
+    await request(app).post('/api/v1/users').send(testUser);
+    const res = await request(app).post('/api/v1/users/sessions').send(testUser);
     expect(res.status).toBe(200);
-    expect(res.body).toEqual(expect.any(String));
+    expect(res.body.message).toEqual('Signed in successfully!');
+  });
+  it('does not sign in an invalid user', async () => {
+    const invalidUser = {
+      firstName: 'Not A.',
+      lastName: 'User',
+      email: 'fakeUser@test.com',
+      password: 'not!real!'
+    };
+    const res = await request(app).post('/api/v1/users/sessions').send(invalidUser);
+    expect(res.status).toBe(401);
   });
   afterAll(() => {
     pool.end();
