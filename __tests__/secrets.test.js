@@ -42,6 +42,20 @@ describe('backend-express-template routes', () => {
     const res = await request(app).get('/api/v1/secrets');
     expect(res.status).toBe(401);
   });
+  it('should add a new secret if user is logged in', async () => {
+    const agent = await registerAndLogin();
+    const newSecret = {
+      title: 'Birds Aren\'t Real',
+      description: 'All birds are small government-created drones built for surveilling the American people.'
+    };
+    const res = await agent.post('/api/v1/secrets').send(newSecret);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      id: expect.any(String),
+      created_at: expect.any(String),
+      ...newSecret
+    });
+  });
   afterAll(() => {
     pool.end();
   });
