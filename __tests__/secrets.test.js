@@ -13,22 +13,24 @@ const testUser = {
 
 const registerAndLogin = async () => {
   const agent = request.agent(app);
+
   const user = await UserService.create({ ...testUser });
 
   const password = testUser.password;
   const { email } = user;
+
   await agent.post('/api/v1/users/sessions').send({ email, password });
-  return [agent];
+  return agent;
 };
+
 
 describe('backend-express-template routes', () => {
   beforeEach(() => {
     return setup(pool);
   });
   it('should get list of secrets if user is signed in', async () => {
-    const [agent] = await registerAndLogin();
+    const agent = await registerAndLogin();
     const res = await agent.get('/api/v1/secrets');
-
     expect(res.status).toBe(200);
     expect(res.body[0]).toEqual({
       title: expect.any(String),
