@@ -42,6 +42,17 @@ describe('authentication and authorization routes', () => {
     const res = await request(app).post('/api/v1/users/sessions').send(invalidUser);
     expect(res.status).toBe(401);
   });
+  it('signs out a user', async () => {
+    await request(app).post('/api/v1/users').send(testUser);
+    await request(app).post('/api/v1/users/sessions').send(testUser);
+    const res = await request(app).delete('/api/v1/users/sessions');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      success: true,
+      message: 'Signed out successfully!'
+    });
+  });
   afterAll(() => {
     pool.end();
   });
