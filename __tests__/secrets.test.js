@@ -36,6 +36,10 @@ describe('backend-express-template routes', () => {
       created_at: expect.any(String)
     });
   });
+  it('should give a 401 error if user is not signed in and tries to get secrets', async () => {
+    const res = await request(app).get('/api/v1/secrets');
+    expect(res.status).toBe(401);
+  });
   afterAll(() => {
     pool.end();
   });
