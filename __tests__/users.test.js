@@ -2,6 +2,7 @@ const pool = require('../lib/utils/pool');
 const setup = require('../data/setup');
 const request = require('supertest');
 const app = require('../lib/app');
+const UserService = require('../lib/services/UserService');
 
 const testUser = {
   firstName: 'Test',
@@ -15,6 +16,25 @@ const authorizedUser = {
   lastName: 'user',
   email: 'test@defense.gov',
   password: 'password'
+};
+
+const joeBiden = {
+  firstName: 'Joe',
+  lastName: 'Biden',
+  email: 'joe.biden@defense.gov',
+  password: 'password'
+};
+
+const registerAndLogin = async (userProps = {}) => {
+  const agent = request.agent(app);
+
+  const user = await UserService.create({ ...joeBiden, ...userProps });
+
+  const password = userProps.password ?? joeBiden.password;
+  const { email } = user;
+
+  await agent.post('/api/v1/users/sessions').send({ email, password });
+  return agent;
 };
 
 describe('authentication and authorization routes', () => {
@@ -63,6 +83,26 @@ describe('authentication and authorization routes', () => {
       success: true,
       message: 'Signed out successfully!'
     });
+  });
+  it('gets a list of users if the current user is joe.biden@defense.gov', async () => {
+    const agent = await registerAndLogin();
+    const res = await agent.get('/api/v1/users');
+    expect(res.status).toBe(200);
+    expect(res.body[0]).toEqual({
+      id: expect.any(String),
+      firstName: expect.any(String),
+      lastName: expect.any(String),
+      email: expect.any(String)
+    });
+  });
+  it('gives a 403 error if a non-authorized user tries to see list of users', async () => {
+    const agent = await registerAndLogin(testUser);
+    const res = await agent.get('/api/v1/users');
+    expect(res.status).toBe(403);
+  });
+  it('gives a 401 error if non-authenticated user tries to get list of users', async () => {
+    const res = await request(app).get('/api/v1/users');
+    expect(res.status).toBe(401);
   });
   afterAll(() => {
     pool.end();
